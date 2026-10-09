@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Details - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    🍽️ SharePlate
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#" id="dashboardLink">Dashboard</a></li>
+                    <li><span id="userName">Loading...</span></li>
+                    <li><button id="logoutBtn" class="btn-logout">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Message container -->
+        <div id="message" class="message"></div>
+
+        <!-- Loading State -->
+        <div id="loadingSpinner" class="text-center" style="padding: 3rem;">
+            <div class="loading" style="margin: 0 auto;"></div>
+            <p style="margin-top: 1rem;">Loading donation details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="text-center hidden" style="padding: 3rem;">
+            <p style="color: #e74c3c; font-size: 1.2rem;">❌ Failed to load donation details</p>
+            <p style="color: #666;">Please try again or contact support if the problem persists.</p>
+            <button onclick="loadDonationDetails()" class="btn btn-primary">Retry</button>
+        </div>
+
+        <!-- Donation Details -->
+        <div id="donationDetails" class="hidden">
+            <!-- Header -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <div class="flex-between">
+                        <h2 id="donationTitle">Food Donation Details</h2>
+                        <div id="statusBadge" class="status-badge">Loading...</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="donationImage" class="hidden" style="margin-bottom: 1rem; text-align: center;">
+                        <img id="foodImage" style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" alt="Food Image">
+                    </div>
+                    
+                    <div class="grid grid-2" style="gap: 2rem;">
+                        <div>
+                            <h4 style="margin-bottom: 1rem; color: #2c3e50;">Food Information</h4>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                                <p><strong>Food Name:</strong> <span id="foodName">-</span></p>
+                                <p><strong>Quantity:</strong> <span id="quantity">-</span></p>
+                                <p><strong>Type:</strong> <span id="foodType">-</span></p>
+                                <p><strong>Cooked Time:</strong> <span id="cookedTime">-</span></p>
+                                <p><strong>Best Before:</strong> <span id="expiryTime">-</span></p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 style="margin-bottom: 1rem; color: #2c3e50;">Pickup Information</h4>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                                <p><strong>Address:</strong> <span id="pickupAddress">-</span></p>
+                                <p><strong>Contact Number:</strong> <a href="#" id="contactNumber">-</a></p>
+                                <div id="locationInfo" class="hidden">
+                                    <p><strong>GPS Location:</strong> <a href="#" id="locationLink" target="_blank">View on Map</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restaurant Details -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3>🏪 Restaurant Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-2" style="gap: 2rem;">
+                        <div>
+                            <p><strong>Name:</strong> <span id="restaurantName">-</span></p>
+                            <p><strong>Email:</strong> <a href="#" id="restaurantEmail">-</a></p>
+                            <p><strong>Phone:</strong> <a href="#" id="restaurantPhone">-</a></p>
+                        </div>
+                        <div>
+                            <p><strong>Address:</strong> <span id="restaurantAddress">-</span></p>
+                            <p><strong>Member Since:</strong> <span id="restaurantJoined">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NGO Details (if accepted) -->
+            <div id="ngoDetails" class="card hidden" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3>🤝 NGO Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-2" style="gap: 2rem;">
+                        <div>
+                            <p><strong>Name:</strong> <span id="ngoName">-</span></p>
+                            <p><strong>Email:</strong> <a href="#" id="ngoEmail">-</a></p>
+                            <p><strong>Phone:</strong> <a href="#" id="ngoPhone">-</a></p>
+                        </div>
+                        <div>
+                            <p><strong>Address:</strong> <span id="ngoAddress">-</span></p>
+                            <p><strong>Accepted On:</strong> <span id="acceptedAt">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3>📅 Timeline</h3>
+                </div>
+                <div class="card-body">
+                    <div id="timeline">
+                        <!-- Timeline will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div id="actionButtons" class="flex gap-2" style="flex-wrap: wrap;">
+                        <!-- Action buttons will be generated based on user role and donation status -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/donor.js"></script>
+    <script src="js/ngo.js"></script>
+    <script>
+        // Global state
+        let currentUser = null;
+        let donation = null;
+        let donationId = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = user;
+
+            // Set user name and dashboard link
+            document.getElementById('userName').textContent = user.name;
+            const dashboardLink = document.getElementById('dashboardLink');
+            if (user.role === 'restaurant') {
+                dashboardLink.href = 'donor-dashboard.html';
+            } else {
+                dashboardLink.href = 'ngo-dashboard.html';
+            }
+
+            // Get donation ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            donationId = urlParams.get('id');
+
+            if (!donationId) {
+                showError('No donation ID provided');
+                return;
+            }
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Load donation details
+            await loadDonationDetails();
+        });
+
+        function setupEventListeners() {
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                logout();
+                window.location.href = 'index.html';
+            });
+        }
+
+        async function loadDonationDetails() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const errorState = document.getElementById('errorState');
+            const donationDetails = document.getElementById('donationDetails');
+
+            try {
+                loadingSpinner.classList.remove('hidden');
+                errorState.classList.add('hidden');
+                donationDetails.classList.add('hidden');
+
+                const result = await getDonationDetails(donationId);
+                
+                if (result.success) {
+                    donation = result.data;
+                    displayDonationDetails(donation);
+                    donationDetails.classList.remove('hidden');
+                } else {
+                    showError(result.message || 'Failed to load donation details');
+                }
+            } catch (error) {
+                showError(error.message || 'An error occurred while loading donation details');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        function displayDonationDetails(donation) {
+            // Basic donation info
+            document.getElementById('donationTitle').textContent = donation.foodName;
+            document.getElementById('statusBadge').className = `status-badge status-${donation.status}`;
+            document.getElementById('statusBadge').textContent = donation.status.toUpperCase();
+
+            document.getElementById('foodName').textContent = donation.foodName;
+            document.getElementById('quantity').textContent = donation.quantity;
+            document.getElementById('foodType').innerHTML = `<span class="food-type ${donation.foodType}">${donation.foodType.toUpperCase()}</span>`;
+            document.getElementById('cookedTime').textContent = new Date(donation.cookedTime).toLocaleString();
+            document.getElementById('expiryTime').textContent = new Date(donation.expiryTime).toLocaleString();
+            document.getElementById('pickupAddress').textContent = donation.pickupAddress;
+            
+            // Contact number with tel link
+            const contactEl = document.getElementById('contactNumber');
+            contactEl.href = `tel:${donation.contactNumber}`;
+            contactEl.textContent = donation.contactNumber;
+
+            // Food image
+            if (donation.imageUrl) {
+                document.getElementById('foodImage').src = donation.imageUrl;
+                document.getElementById('donationImage').classList.remove('hidden');
+            }
+
+            // GPS location
+            if (donation.location && donation.location.lat && donation.location.lng) {
+                const locationLink = document.getElementById('locationLink');
+                locationLink.href = `https://www.google.com/maps?q=${donation.location.lat},${donation.location.lng}`;
+                document.getElementById('locationInfo').classList.remove('hidden');
+            }
+
+            // Restaurant details
+            document.getElementById('restaurantName').textContent = donation.donorId.name;
+            const restaurantEmailEl = document.getElementById('restaurantEmail');
+            restaurantEmailEl.href = `mailto:${donation.donorId.email}`;
+            restaurantEmailEl.textContent = donation.donorId.email;
+            const restaurantPhoneEl = document.getElementById('restaurantPhone');
+            restaurantPhoneEl.href = `tel:${donation.donorId.phone}`;
+            restaurantPhoneEl.textContent = donation.donorId.phone;
+            document.getElementById('restaurantAddress').textContent = donation.donorId.address;
+            document.getElementById('restaurantJoined').textContent = new Date(donation.donorId.createdAt).toLocaleDateString();
+
+            // NGO details (if accepted)
+            if (donation.acceptedBy) {
+                document.getElementById('ngoName').textContent = donation.acceptedBy.name;
+                const ngoEmailEl = document.getElementById('ngoEmail');
+                ngoEmailEl.href = `mailto:${donation.acceptedBy.email}`;
+                ngoEmailEl.textContent = donation.acceptedBy.email;
+                const ngoPhoneEl = document.getElementById('ngoPhone');
+                ngoPhoneEl.href = `tel:${donation.acceptedBy.phone}`;
+                ngoPhoneEl.textContent = donation.acceptedBy.phone;
+                document.getElementById('ngoAddress').textContent = donation.acceptedBy.address;
+                document.getElementById('acceptedAt').textContent = new Date(donation.acceptedAt).toLocaleString();
+                document.getElementById('ngoDetails').classList.remove('hidden');
+            }
+
+            // Timeline
+            displayTimeline(donation);
+
+            // Action buttons
+            displayActionButtons(donation);
+        }
+
+        function displayTimeline(donation) {
+            const timeline = document.getElementById('timeline');
+            const events = [];
+
+            // Created
+            events.push({
+                icon: '📝',
+                title: 'Donation Created',
+                time: new Date(donation.createdAt),
+                description: `${donation.donorId.name} posted this food donation`,
+                status: 'completed'
+            });
+
+            // Accepted
+            if (donation.acceptedBy) {
+                events.push({
+                    icon: '✅',
+                    title: 'Donation Accepted',
+                    time: new Date(donation.acceptedAt),
+                    description: `${donation.acceptedBy.name} accepted this donation`,
+                    status: 'completed'
+                });
+            }
+
+            // Completed
+            if (donation.status === 'completed') {
+                events.push({
+                    icon: '🎉',
+                    title: 'Donation Completed',
+                    time: new Date(donation.completedAt),
+                    description: 'Food was successfully picked up and distributed',
+                    status: 'completed'
+                });
+            }
+
+            // Cancelled
+            if (donation.status === 'cancelled') {
+                events.push({
+                    icon: '❌',
+                    title: 'Donation Cancelled',
+                    time: new Date(donation.updatedAt),
+                    description: 'This donation was cancelled',
+                    status: 'cancelled'
+                });
+            }
+
+            const timelineHtml = events.map(event => `
+                <div style="display: flex; gap: 1rem; padding: 1rem; border-left: 3px solid ${event.status === 'completed' ? '#27ae60' : '#e74c3c'}; background: ${event.status === 'completed' ? '#f8fff8' : '#fff8f8'}; margin-bottom: 1rem; border-radius: 0 8px 8px 0;">
+                    <div style="font-size: 1.5rem;">${event.icon}</div>
+                    <div>
+                        <h5 style="margin-bottom: 0.5rem; color: #2c3e50;">${event.title}</h5>
+                        <p style="margin-bottom: 0.5rem; color: #666;">${event.description}</p>
+                        <small style="color: #999;">${event.time.toLocaleString()}</small>
+                    </div>
+                </div>
+            `).join('');
+
+            timeline.innerHTML = timelineHtml;
+        }
+
+        function displayActionButtons(donation) {
+            const actionButtons = document.getElementById('actionButtons');
+            let buttons = [];
+
+            // NGO actions
+            if (currentUser.role === 'ngo') {
+                if (donation.status === 'pending') {
+                    buttons.push(`<button onclick="acceptDonation()" class="btn btn-success">Accept Donation</button>`);
+                } else if (donation.status === 'accepted' && donation.acceptedBy._id === currentUser._id) {
+                    buttons.push(`<button onclick="completeDonation()" class="btn btn-warning">Mark Completed</button>`);
+                }
+            }
+
+            // Restaurant actions
+            if (currentUser.role === 'restaurant' && donation.donorId._id === currentUser._id) {
+                if (donation.status === 'pending') {
+                    buttons.push(`<button onclick="cancelDonation()" class="btn btn-danger">Cancel Donation</button>`);
+                }
+            }
+
+            // Common actions
+            if (donation.donorId.phone) {
+                buttons.push(`<a href="tel:${donation.donorId.phone}" class="btn btn-primary">📞 Call Restaurant</a>`);
+            }
+
+            if (donation.acceptedBy && donation.acceptedBy.phone) {
+                buttons.push(`<a href="tel:${donation.acceptedBy.phone}" class="btn btn-primary">📞 Call NGO</a>`);
+            }
+
+            if (donation.location && donation.location.lat && donation.location.lng) {
+                buttons.push(`<a href="https://www.google.com/maps?q=${donation.location.lat},${donation.location.lng}" target="_blank" class="btn btn-primary">📍 Get Directions</a>`);
+            }
+
+            buttons.push(`<button onclick="window.history.back()" class="btn btn-outline">← Back</button>`);
+
+            actionButtons.innerHTML = buttons.join('');
+        }
+
+        async function acceptDonation() {
+            if (!confirm('Are you sure you want to accept this donation? You will be responsible for picking it up.')) {
+                return;
+            }
+
+            try {
+                const result = await acceptDonationRequest(donationId);
+                
+                if (result.success) {
+                    showMessage('Donation accepted successfully! Please coordinate with the restaurant for pickup.', 'success');
+                    await loadDonationDetails(); // Refresh details
+                } else {
+                    showMessage(result.message || 'Failed to accept donation', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while accepting donation', 'error');
+            }
+        }
+
+        async function completeDonation() {
+            if (!confirm('Mark this donation as completed? This means you have successfully picked up and distributed the food.')) {
+                return;
+            }
+
+            try {
+                const result = await updateDonationStatus(donationId, 'completed');
+                
+                if (result.success) {
+                    showMessage('Donation marked as completed! Thank you for helping reduce food waste.', 'success');
+                    await loadDonationDetails(); // Refresh details
+                } else {
+                    showMessage(result.message || 'Failed to complete donation', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while completing donation', 'error');
+            }
+        }
+
+        async function cancelDonation() {
+            if (!confirm('Are you sure you want to cancel this donation?')) {
+                return;
+            }
+
+            try {
+                const result = await updateDonationStatus(donationId, 'cancelled');
+                
+                if (result.success) {
+                    showMessage('Donation cancelled successfully', 'success');
+                    await loadDonationDetails(); // Refresh details
+                } else {
+                    showMessage(result.message || 'Failed to cancel donation', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while cancelling donation', 'error');
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('errorState').classList.remove('hidden');
+            showMessage(message, 'error');
+        }
+
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message show message-${type}`;
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Restaurant Dashboard - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <style>
+        .dark-mode { background: #1a1a1a; color: #fff; }
+        .dark-mode .card { background: #2d2d2d; }
+        .dark-mode .header { background: #2d2d2d; }
+        .badge-container { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+        .badge-item { text-align: center; padding: 1rem; background: #f0f0f0; border-radius: 8px; min-width: 100px; }
+        .notification-badge { background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; }
+        .chat-icon { position: fixed; bottom: 20px; right: 20px; background: #3498db; color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .feature-card { padding: 1.5rem; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer; transition: transform 0.2s; }
+        .feature-card:hover { transform: translateY(-5px); }
+        .image-upload-zone { border: 2px dashed #ccc; padding: 2rem; text-align: center; border-radius: 8px; cursor: pointer; }
+        .image-upload-zone:hover { border-color: #3498db; background: #f0f8ff; }
+        .analytics-chart { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 1rem 0; }
+        .qr-code-display { text-align: center; padding: 1rem; }
+        .donation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 1rem 0;
+            border-left: 5px solid;
+            position: relative;
+        }
+        .donation-card.critical { border-left-color: #e74c3c; }
+        .donation-card.urgent { border-left-color: #e67e22; }
+        .donation-card.moderate { border-left-color: #f39c12; }
+        .donation-card.low { border-left-color: #3498db; }
+        .donation-card.fresh { border-left-color: #2ecc71; }
+        .donation-card.expired { border-left-color: #95a5a6; }
+        .urgency-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .countdown-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            color: #2c3e50;
+        }
+        .countdown-timer.critical { color: #e74c3c; animation: pulse 1s infinite; }
+        .countdown-timer.urgent { color: #e67e22; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .donations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        .donation-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+            font-size: 0.95rem;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">🍽️ SharePlate v2.0</div>
+                <ul class="nav-links">
+                    <li>
+                        <button id="notificationBtn" class="btn" style="position: relative;">
+                            🔔 Notifications
+                            <span id="notifBadge" class="notification-badge" style="display: none;">0</span>
+                        </button>
+                    </li>
+                    <li><button id="darkModeToggle" class="btn">🌙 Dark Mode</button></li>
+                    <li><span id="userName">Loading...</span></li>
+                    <li><span id="userPoints" class="badge-item" style="display: inline-block; margin-left: 10px;">⭐ 0 pts</span></li>
+                    <li><button id="logoutBtn" class="btn-logout">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 1400px;">
+        <div class="dashboard-header">
+            <h1>🏪 Enhanced Restaurant Dashboard</h1>
+            <p>All Features Unlocked - v2.0</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <!-- Quick Feature Access -->
+        <div class="feature-grid">
+            <div class="feature-card" onclick="showSection('analytics')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3>📊 Analytics Dashboard</h3>
+                <p>View insights & trends</p>
+            </div>
+            <div class="feature-card" onclick="showSection('badges')" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>🏆 Gamification</h3>
+                <p>Badges & Leaderboard</p>
+            </div>
+            <div class="feature-card" onclick="showSection('upload')" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3>📸 Image Upload</h3>
+                <p>Upload donation photos</p>
+            </div>
+            <div class="feature-card" onclick="showSection('reports')" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3>📄 PDF Reports</h3>
+                <p>Generate & download</p>
+            </div>
+            <div class="feature-card" onclick="showSection('reviews')" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h3>⭐ Reviews & Ratings</h3>
+                <p>See your ratings</p>
+            </div>
+            <div class="feature-card" onclick="showSection('donations')" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                <h3>🔍 Advanced Search</h3>
+                <p>Manage donations</p>
+            </div>
+        </div>
+
+        <!-- My Donations with Urgency Tracking -->
+        <div class="card" id="urgentDonationsSection">
+            <div class="card-header">
+                <h2>⏰ My Donations - Live Urgency Tracking</h2>
+                <p style="margin-top: 0.5rem; color: #666;">Real-time countdown and urgency indicators</p>
+            </div>
+            <div class="card-body">
+                <div id="myDonationsList" class="donations-grid">
+                    <p>Loading donations...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analyticsSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📊 Analytics Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalDonations">-</div>
+                            <div class="stat-label">Total Donations</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="completedDonations">-</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalMeals">-</div>
+                            <div class="stat-label">Meals Saved</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="carbonSaved">-</div>
+                            <div class="stat-label">kg CO₂ Saved</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="avgRating">-</div>
+                            <div class="stat-label">Average Rating</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="userRank">-</div>
+                            <div class="stat-label">Your Rank</div>
+                        </div>
+                    </div>
+                    <div class="analytics-chart">
+                        <h3>📈 Monthly Trend</h3>
+                        <canvas id="trendChart" width="400" height="100"></canvas>
+                        <div id="monthlyData" style="margin-top: 1rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gamification Section -->
+        <div id="badgesSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🏆 Gamification - Badges & Points</h2>
+                </div>
+                <div class="card-body">
+                    <div style="text-align: center; margin: 2rem 0;">
+                        <h3>Your Points: <span id="totalPoints" style="color: #f39c12; font-size: 2rem;">0</span> ⭐</h3>
+                        <p>Rank: <span id="rankDisplay">Loading...</span></p>
+                    </div>
+                    <h3>🏅 Your Badges</h3>
+                    <div id="badgesList" class="badge-container"></div>
+                    
+                    <h3 style="margin-top: 2rem;">🏆 Leaderboard - Top Donors</h3>
+                    <div id="leaderboard"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Upload Section -->
+        <div id="uploadSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📸 Image Upload (Cloudinary)</h2>
+                </div>
+                <div class="card-body">
+                    <div class="image-upload-zone" onclick="document.getElementById('imageInput').click()">
+                        <p style="font-size: 3rem;">📷</p>
+                        <p>Click to upload donation images</p>
+                        <p style="font-size: 0.9rem; color: #777;">Supports: JPG, PNG (Max 5 images, 2MB each)</p>
+                    </div>
+                    <input type="file" id="imageInput" multiple accept="image/*" style="display: none;" onchange="uploadImages(event)">
+                    <div id="uploadProgress" style="margin-top: 1rem;"></div>
+                    <div id="uploadedImages" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reportsSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📄 PDF Reports & CSV Export</h2>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <button onclick="generatePDFReport()" class="btn btn-primary" style="padding: 2rem;">
+                            📄 Download PDF Report<br><small>Your donation summary</small>
+                        </button>
+                        <button onclick="exportCSV()" class="btn btn-success" style="padding: 2rem;">
+                            📊 Export CSV<br><small>All donation data</small>
+                        </button>
+                        <button onclick="generateTaxCertificate()" class="btn" style="padding: 2rem; background: #9b59b6; color: white;">
+                            🧾 Tax Certificate<br><small>Yearly summary</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div id="reviewsSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>⭐ Reviews & Ratings</h2>
+                </div>
+                <div class="card-body">
+                    <div id="reviewsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donations Section with Advanced Search -->
+        <div id="donationsSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔍 Advanced Search & Donation Management</h2>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" id="searchQuery" placeholder="Search donations..." class="form-control">
+                        <select id="statusFilter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <input type="text" id="locationSearch" placeholder="Location..." class="form-control">
+                        <button onclick="searchDonations()" class="btn btn-primary">🔍 Search</button>
+                    </div>
+                    <div id="donationsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Display -->
+        <div id="qrSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔍 QR Code Verification</h2>
+                </div>
+                <div class="card-body qr-code-display">
+                    <p>QR codes are automatically generated for each donation</p>
+                    <div id="qrDisplay"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Chat Button -->
+    <div class="chat-icon" onclick="openChat()">💬</div>
+
+    <!-- Notification Panel (hidden by default) -->
+    <div id="notificationPanel" style="display: none; position: fixed; top: 70px; right: 20px; width: 350px; max-height: 500px; overflow-y: auto; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000;"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api-enhanced.js"></script>
+    <script>
+        let currentSection = 'analytics';
+        let countdownIntervals = [];
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!isAuthenticated()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadUserInfo();
+            loadMyDonations();
+            loadStats();
+            loadNotifications();
+            startRealtimeUpdates();
+            
+            // Update countdowns every second
+            setInterval(updateAllCountdowns, 1000);
+        });
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userPoints').textContent = `⭐ ${user.points || 0} pts`;
+        }
+
+        // Load donations with urgency tracking
+        async function loadMyDonations() {
+            try {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/donations/my', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayDonationsWithUrgency(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading donations:', error);
+            }
+        }
+
+        function displayDonationsWithUrgency(donations) {
+            const container = document.getElementById('myDonationsList');
+            
+            if (donations.length === 0) {
+                container.innerHTML = '<p>No donations yet. Create your first donation!</p>';
+                return;
+            }
+
+            // Sort by urgency (most urgent first)
+            donations.sort((a, b) => {
+                const urgencyA = calculateUrgency(a.expiryTime);
+                const urgencyB = calculateUrgency(b.expiryTime);
+                return urgencyB.priority - urgencyA.priority;
+            });
+
+            const html = donations.map(donation => {
+                const urgency = calculateUrgency(donation.expiryTime);
+                const timeRemaining = getTimeRemaining(donation.expiryTime);
+                
+                return `
+                    <div class="donation-card ${urgency.level}" id="donation-${donation._id}">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <h3 style="margin: 0;">${donation.foodName}</h3>
+                            <span class="urgency-badge" style="background: ${urgency.color};">
+                                ${urgency.level.toUpperCase()}
+                            </span>
+                        </div>
+                        
+                        <div class="countdown-timer ${urgency.level}" 
+                             data-expiry="${donation.expiryTime}" 
+                             data-donation-id="${donation._id}">
+                            ${timeRemaining.display}
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" 
+                                 style="width: ${getProgressWidth(donation.expiryTime)}%; background: ${urgency.color};">
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 1rem 0;">
+                            <p style="margin: 0.5rem 0; color: ${urgency.color}; font-weight: bold;">
+                                ${urgency.message}
+                            </p>
+                        </div>
+                        
+                        <div class="donation-info">
+                            <span>📦 Quantity:</span>
+                            <strong>${donation.quantity}</strong>
+                        </div>
+                        <div class="donation-info">
+                            <span>🍽️ Type:</span>
+                            <strong>${donation.foodType.toUpperCase()}</strong>
+                        </div>
+                        <div class="donation-info">
+                            <span>📊 Status:</span>
+                            <strong style="color: ${getStatusColor(donation.status)};">
+                                ${donation.status.toUpperCase()}
+                            </strong>
+                        </div>
+                        ${donation.estimatedMeals ? `
+                        <div class="donation-info">
+                            <span>🥘 Est. Meals:</span>
+                            <strong>${donation.estimatedMeals}</strong>
+                        </div>
+                        ` : ''}
+                        ${donation.carbonFootprintSaved ? `
+                        <div class="donation-info">
+                            <span>🌱 CO2 Saved:</span>
+                            <strong>${Math.round(donation.carbonFootprintSaved)}kg</strong>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                            ${donation.qrCode ? `<button onclick="showQR('${donation.qrCode}')" class="btn" style="flex: 1;">📱 QR Code</button>` : ''}
+                            <button onclick="viewDonation('${donation._id}')" class="btn" style="flex: 1;">👁️ Details</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function calculateUrgency(expiryTime) {
+            const now = new Date();
+            const expiry = new Date(expiryTime);
+            const hoursUntilExpiry = (expiry - now) / (1000 * 60 * 60);
+
+            if (hoursUntilExpiry <= 0) {
+                return {
+                    level: 'expired',
+                    color: '#95a5a6',
+                    priority: 0,
+                    message: 'Expired',
+                    hoursRemaining: 0
+                };
+            } else if (hoursUntilExpiry <= 2) {
+                return {
+                    level: 'critical',
+                    color: '#e74c3c',
+                    priority: 5,
+                    message: 'Critical - Expires very soon!',
+                    hoursRemaining: Math.round(hoursUntilExpiry * 10) / 10
+                };
+            } else if (hoursUntilExpiry <= 4) {
+                return {
+                    level: 'urgent',
+                    color: '#e67e22',
+                    priority: 4,
+                    message: 'Urgent - Pickup needed soon',
+                    hoursRemaining: Math.round(hoursUntilExpiry * 10) / 10
+                };
+            } else if (hoursUntilExpiry <= 8) {
+                return {
+                    level: 'moderate',
+                    color: '#f39c12',
+                    priority: 3,
+                    message: 'Moderate urgency',
+                    hoursRemaining: Math.round(hoursUntilExpiry * 10) / 10
+                };
+            } else if (hoursUntilExpiry <= 12) {
+                return {
+                    level: 'low',
+                    color: '#3498db',
+                    priority: 2,
+                    message: 'Available for pickup',
+                    hoursRemaining: Math.round(hoursUntilExpiry * 10) / 10
+                };
+            } else {
+                return {
+                    level: 'fresh',
+                    color: '#2ecc71',
+                    priority: 1,
+                    message: 'Fresh - Plenty of time',
+                    hoursRemaining: Math.round(hoursUntilExpiry * 10) / 10
+                };
+            }
+        }
+
+        function getTimeRemaining(expiryTime) {
+            const now = new Date();
+            const expiry = new Date(expiryTime);
+            const diff = expiry - now;
+
+            if (diff <= 0) {
+                return { expired: true, display: 'EXPIRED ⏰' };
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            if (days > 0) {
+                return { 
+                    expired: false, 
+                    display: `${days}d ${hours}h ${minutes}m remaining`
+                };
+            } else if (hours > 0) {
+                return { 
+                    expired: false, 
+                    display: `${hours}h ${minutes}m ${seconds}s remaining`
+                };
+            } else {
+                return { 
+                    expired: false, 
+                    display: `${minutes}m ${seconds}s remaining`
+                };
+            }
+        }
+
+        function getProgressWidth(expiryTime) {
+            const now = new Date();
+            const expiry = new Date(expiryTime);
+            const total = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            const remaining = expiry - now;
+            const percentage = Math.max(0, Math.min(100, (remaining / total) * 100));
+            return percentage;
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                pending: '#f39c12',
+                accepted: '#3498db',
+                completed: '#2ecc71',
+                cancelled: '#e74c3c',
+                expired: '#95a5a6'
+            };
+            return colors[status] || '#666';
+        }
+
+        function updateAllCountdowns() {
+            const timers = document.querySelectorAll('.countdown-timer');
+            timers.forEach(timer => {
+                const expiryTime = timer.getAttribute('data-expiry');
+                const timeRemaining = getTimeRemaining(expiryTime);
+                timer.textContent = timeRemaining.display;
+                
+                // Update urgency class
+                const urgency = calculateUrgency(expiryTime);
+                timer.className = `countdown-timer ${urgency.level}`;
+                
+                // Update card border color
+                const donationId = timer.getAttribute('data-donation-id');
+                const card = document.getElementById(`donation-${donationId}`);
+                if (card) {
+                    card.className = `donation-card ${urgency.level}`;
+                }
+            });
+        }
+
+        function showQR(qrCode) {
+            alert('QR Code feature - QR code will be displayed here');
+            // In production, show in a modal
+        }
+
+        function viewDonation(id) {
+            alert(`Viewing donation details for ID: ${id}`);
+            // In production, navigate to details page or show modal
+        }
+
+        function startRealtimeUpdates() {
+            // Connect to Socket.IO for real-time updates
+            const socket = io(window.SHAREPLATE_API_ORIGIN);
+            
+            socket.on('donation_update', (data) => {
+                console.log('Donation updated:', data);
+                loadMyDonations(); // Reload donations
+            });
+
+            socket.on('new_donation', (data) => {
+                console.log('New donation:', data);
+                if (document.getElementById('notifBadge')) {
+                    const badge = document.getElementById('notifBadge');
+                    const count = parseInt(badge.textContent) || 0;
+                    badge.textContent = count + 1;
+                    badge.style.display = 'inline';
+                }
+            });
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/analytics/stats', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalDonations').textContent = data.data.totalDonations || 0;
+                    document.getElementById('completedDonations').textContent = data.data.completed || 0;
+                    document.getElementById('totalMeals').textContent = data.data.totalMeals || 0;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadNotifications() {
+            // Load notifications logic
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!isAuthenticated()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = getCurrentUser();
+            document.getElementById('userName').textContent = user.name || 'User';
+
+            // Load all data
+            await loadAnalytics();
+            await loadBadges();
+            await loadNotifications();
+            
+            // Show analytics by default
+            showSection('analytics');
+        });
+
+        // Dark Mode Toggle
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('darkModeToggle').textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+            localStorage.setItem('darkMode', isDark);
+        });
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeToggle').textContent = '☀️ Light Mode';
+        }
+
+        function showSection(section) {
+            // Hide all sections
+            ['analytics', 'badges', 'upload', 'reports', 'reviews', 'donations', 'qr'].forEach(s => {
+                document.getElementById(s + 'Section').style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(section + 'Section').style.display = 'block';
+            currentSection = section;
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/analytics/dashboard', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('totalDonations').textContent = stats.totalDonations || 0;
+                    document.getElementById('completedDonations').textContent = stats.completedDonations || 0;
+                    document.getElementById('totalMeals').textContent = stats.totalMeals || 0;
+                    document.getElementById('carbonSaved').textContent = (stats.carbonFootprintSaved || 0).toFixed(1);
+                    document.getElementById('avgRating').textContent = (stats.averageRating || 0).toFixed(1) + ' ⭐';
+                    
+                    // Monthly data
+                    if (stats.monthlyTrend) {
+                        const monthlyHtml = stats.monthlyTrend.map(m => 
+                            `<div style="display: inline-block; margin: 0.5rem; padding: 0.5rem; background: #ecf0f1; border-radius: 4px;">
+                                <strong>${m._id.month}/${m._id.year}</strong>: ${m.count} donations
+                            </div>`
+                        ).join('');
+                        document.getElementById('monthlyData').innerHTML = monthlyHtml;
+                    }
+                }
+            } catch (error) {
+                console.error('Analytics error:', error);
+            }
+        }
+
+        async function loadBadges() {
+            try {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/gamification/badges', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const badges = data.data;
+                    document.getElementById('totalPoints').textContent = data.totalPoints || 0;
+                    document.getElementById('userPoints').textContent = '⭐ ' + (data.totalPoints || 0) + ' pts';
+                    
+                    const badgesHtml = badges.map(b => 
+                        `<div class="badge-item">
+                            <div style="font-size: 3rem;">${b.badge.icon}</div>
+                            <strong>${b.badge.name}</strong>
+                            <div><small>${b.badge.description}</small></div>
+                            <div style="margin-top: 0.5rem;">
+                                <div style="background: #ecf0f1; border-radius: 10px; height: 10px; overflow: hidden;">
+                                    <div style="background: #3498db; height: 100%; width: ${b.progress}%;"></div>
+                                </div>
+                                <small>${b.progress.toFixed(0)}% complete</small>
+                            </div>
+                        </div>`
+                    ).join('');
+                    document.getElementById('badgesList').innerHTML = badgesHtml || '<p>No badges yet. Keep donating!</p>';
+                }
+
+                // Load leaderboard
+                const leaderResponse = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/analytics/leaderboard?type=donations&limit=10', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const leaderData = await leaderResponse.json();
+                
+                if (leaderData.success) {
+                    const leaderHtml = leaderData.data.map((user, idx) => 
+                        `<div style="padding: 1rem; margin: 0.5rem 0; background: ${idx < 3 ? '#fff3cd' : '#f8f9fa'}; border-radius: 8px; display: flex; justify-content: space-between;">
+                            <span>${idx + 1}. ${user.name}</span>
+                            <span><strong>${user.count}</strong> donations | ⭐ ${user.points || 0} pts</span>
+                        </div>`
+                    ).join('');
+                    document.getElementById('leaderboard').innerHTML = leaderHtml;
+                }
+
+                // Load rank
+                const rankResponse = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/gamification/rank', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const rankData = await rankResponse.json();
+                if (rankData.success) {
+                    document.getElementById('rankDisplay').textContent = `#${rankData.data.rank} out of ${rankData.data.totalUsers}`;
+                    document.getElementById('userRank').textContent = '#' + rankData.data.rank;
+                }
+            } catch (error) {
+                console.error('Badges error:', error);
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/notifications?limit=10', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const unread = data.data.filter(n => !n.isRead).length;
+                    if (unread > 0) {
+                        document.getElementById('notifBadge').textContent = unread;
+                        document.getElementById('notifBadge').style.display = 'inline-block';
+                    }
+                }
+            } catch (error) {
+                console.error('Notifications error:', error);
+            }
+        }
+
+        // Toggle notification panel
+        document.getElementById('notificationBtn').addEventListener('click', async () => {
+            const panel = document.getElementById('notificationPanel');
+            if (panel.style.display === 'none') {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/notifications?limit=10', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const html = data.data.map(n => 
+                        `<div style="padding: 1rem; border-bottom: 1px solid #eee; ${n.isRead ? '' : 'background: #e3f2fd;'}">
+                            <strong>${n.title}</strong>
+                            <p style="margin: 0.5rem 0; font-size: 0.9rem;">${n.message}</p>
+                            <small style="color: #777;">${new Date(n.createdAt).toLocaleString()}</small>
+                        </div>`
+                    ).join('');
+                    panel.innerHTML = html || '<p style="padding: 1rem;">No notifications</p>';
+                    panel.style.display = 'block';
+                }
+            } else {
+                panel.style.display = 'none';
+            }
+        });
+
+        async function uploadImages(event) {
+            const files = event.target.files;
+            const formData = new FormData();
+            
+            for (let file of files) {
+                formData.append('images', file);
+            }
+            
+            document.getElementById('uploadProgress').textContent = 'Uploading...';
+            
+            try {
+                const response = await fetch(window.SHAREPLATE_API_ORIGIN + '/api/upload/donation-images', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('uploadProgress').innerHTML = `<p style="color: #27ae60;">✅ ${data.data.length} images uploaded successfully!</p>`;
+                    
+                    const imagesHtml = data.data.map(img => 
+                        `<div>
+                            <img src="${img.url}" style="width: 100%; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <small>${img.originalName}</small>
+                        </div>`
+                    ).join('');
+                    document.getElementById('uploadedImages').innerHTML = imagesHtml;
+                } else {
+                    document.getElementById('uploadProgress').innerHTML = `<p style="color: #e74c3c;">❌ ${data.message}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('uploadProgress').innerHTML = `<p style="color: #e74c3c;">❌ Upload failed: ${error.message}</p>`;
+            }
+        }
+
+        async function generatePDFReport() {
+            window.open(window.SHAREPLATE_API_ORIGIN + '/api/reports/pdf?token=' + localStorage.getItem('token'), '_blank');
+        }
+
+        async function exportCSV() {
+            window.open(window.SHAREPLATE_API_ORIGIN + '/api/reports/csv?token=' + localStorage.getItem('token'), '_blank');
+        }
+
+        async function generateTaxCertificate() {
+            const year = new Date().getFullYear();
+            window.open(window.SHAREPLATE_API_ORIGIN + `/api/reports/tax-certificate/${year}?token=` + localStorage.getItem('token'), '_blank');
+        }
+
+        function openChat() {
+            alert('💬 Real-time Chat Feature\n\nChat system is integrated with Socket.IO!\nComing soon in the UI.');
+        }
+
+        async function searchDonations() {
+            const query = document.getElementById('searchQuery').value;
+            const status = document.getElementById('statusFilter').value;
+            const location = document.getElementById('locationSearch').value;
+            
+            let url = window.SHAREPLATE_API_ORIGIN + '/api/donations?';
+            if (query) url += `search=${query}&`;
+            if (status) url += `status=${status}&`;
+            if (location) url += `location=${location}&`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const html = data.data.map(d => 
+                        `<div style="padding: 1rem; margin: 1rem 0; background: #f8f9fa; border-radius: 8px;">
+                            <h4>${d.foodType}</h4>
+                            <p>${d.description}</p>
+                            <p><strong>Status:</strong> ${d.status} | <strong>Quantity:</strong> ${d.quantity}</p>
+                            ${d.qrCode ? `<img src="${d.qrCode}" width="100" alt="QR Code">` : ''}
+                        </div>`
+                    ).join('');
+                    document.getElementById('donationsList').innerHTML = html || '<p>No donations found</p>';
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

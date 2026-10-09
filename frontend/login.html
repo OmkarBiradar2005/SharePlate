@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    <a href="index.html" style="color: white; text-decoration: none;">🍽️ SharePlate</a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="register.html">Register</a></li>
+                    <li><a href="index.html">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="form-container">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #2c3e50;">Welcome Back</h2>
+            
+            <!-- Message container -->
+            <div id="message" class="message"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    <span id="submitText">Login</span>
+                    <span id="submitLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <p>Don't have an account? <a href="register.html" style="color: #3498db; text-decoration: none;">Register here</a></p>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e9ecef;">
+                <h4 style="color: #666; text-align: center; margin-bottom: 1rem;">Demo Accounts</h4>
+                <div class="grid grid-2" style="gap: 1rem;">
+                    <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 5px;">
+                        <strong>Restaurant Demo</strong><br>
+                        <small style="color: #666;">
+                            Email: restaurant@demo.com<br>
+                            Password: demo123
+                        </small>
+                        <br>
+                        <button type="button" onclick="fillDemoLogin('restaurant@demo.com', 'demo123')" class="btn btn-outline" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.5rem 1rem;">Use Demo</button>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 5px;">
+                        <strong>NGO Demo</strong><br>
+                        <small style="color: #666;">
+                            Email: ngo@demo.com<br>
+                            Password: demo123
+                        </small>
+                        <br>
+                        <button type="button" onclick="fillDemoLogin('ngo@demo.com', 'demo123')" class="btn btn-outline" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.5rem 1rem;">Use Demo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            const messageEl = document.getElementById('message');
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const credentials = {
+                email: formData.get('email').trim(),
+                password: formData.get('password')
+            };
+
+            // Basic validation
+            if (!credentials.email || !credentials.password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Show loading state
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            
+            try {
+                const result = await login(credentials);
+                
+                if (result.success) {
+                    // Store user data and redirect
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data));
+                    
+                    showMessage('Login successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        if (result.data.role === 'restaurant') {
+                            window.location.href = 'donor-dashboard.html';
+                        } else {
+                            window.location.href = 'ngo-dashboard.html';
+                        }
+                    }, 1500);
+                } else {
+                    showMessage(result.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred during login', 'error');
+            } finally {
+                // Hide loading state
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+            }
+        }
+
+        function fillDemoLogin(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+        }
+
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message show message-${type}`;
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (token && user.role) {
+                if (user.role === 'restaurant') {
+                    window.location.href = 'donor-dashboard.html';
+                } else {
+                    window.location.href = 'ngo-dashboard.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

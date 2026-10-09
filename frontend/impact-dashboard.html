@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Dashboard - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .impact-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        .impact-stat {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .impact-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2ecc71;
+            margin: 0.5rem 0;
+        }
+        .impact-label {
+            font-size: 1.2rem;
+            color: #666;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .testimonial {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            margin: 1rem 0;
+        }
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+        .testimonial-author {
+            font-weight: bold;
+            color: #666;
+        }
+        .environmental-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #2ecc71;
+            color: white;
+            border-radius: 20px;
+            margin: 0.5rem;
+        }
+        .timeline-item {
+            border-left: 3px solid #3498db;
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -8px;
+            width: 12px;
+            height: 12px;
+            background: #3498db;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">🍽️ SharePlate</div>
+                <ul class="nav-links">
+                    <li><a href="enhanced-donor-dashboard.html">Dashboard</a></li>
+                    <li><a href="impact-dashboard.html" class="active">Impact</a></li>
+                    <li><span id="userName">Loading...</span></li>
+                    <li><button id="logoutBtn" class="btn-logout">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 1400px;">
+        <!-- Hero Section -->
+        <div class="impact-hero">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">🌱 Your Environmental Impact</h1>
+            <p style="font-size: 1.2rem;">Together, we're making a difference in fighting food waste</p>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="stats-grid">
+            <div class="impact-stat">
+                <div class="impact-number" id="totalMeals">0</div>
+                <div class="impact-label">🍽️ Meals Served</div>
+            </div>
+            <div class="impact-stat">
+                <div class="impact-number" id="totalBeneficiaries">0</div>
+                <div class="impact-label">👥 People Helped</div>
+            </div>
+            <div class="impact-stat">
+                <div class="impact-number" id="totalCO2">0kg</div>
+                <div class="impact-label">🌍 CO2 Saved</div>
+            </div>
+            <div class="impact-stat">
+                <div class="impact-number" id="totalWater">0L</div>
+                <div class="impact-label">💧 Water Saved</div>
+            </div>
+        </div>
+
+        <!-- Environmental Badges -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <h2>🏆 Environmental Achievements</h2>
+            <div id="environmentalBadges">
+                <!-- Badges will be dynamically added -->
+            </div>
+        </div>
+
+        <!-- Impact Timeline Chart -->
+        <div class="chart-container">
+            <h2>📈 Impact Over Time</h2>
+            <canvas id="impactChart" height="100"></canvas>
+        </div>
+
+        <!-- Donations vs Impact Chart -->
+        <div class="chart-container">
+            <h2>📊 Donations Distribution</h2>
+            <canvas id="donationsChart" height="100"></canvas>
+        </div>
+
+        <!-- CO2 Equivalents -->
+        <div class="chart-container">
+            <h2>🌱 Your CO2 Savings Equivalent To:</h2>
+            <div class="stats-grid">
+                <div class="impact-stat">
+                    <div class="impact-number" id="treesPlanted">0</div>
+                    <div class="impact-label">🌳 Trees Planted</div>
+                </div>
+                <div class="impact-stat">
+                    <div class="impact-number" id="carMiles">0</div>
+                    <div class="impact-label">🚗 Miles Not Driven</div>
+                </div>
+                <div class="impact-stat">
+                    <div class="impact-number" id="energySaved">0kWh</div>
+                    <div class="impact-label">⚡ Energy Saved</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Impact Stories -->
+        <div class="chart-container">
+            <h2>💝 Success Stories</h2>
+            <div id="testimonials">
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        "Thanks to SharePlate, we were able to serve 200 meals to homeless individuals last month. 
+                        This platform has made food donation so much easier!"
+                    </div>
+                    <div class="testimonial-author">- Hope Foundation NGO</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Timeline -->
+        <div class="chart-container">
+            <h2>🕐 Recent Impact Timeline</h2>
+            <div id="timeline"></div>
+        </div>
+
+        <!-- Download Certificate -->
+        <div style="text-align: center; margin: 3rem 0;">
+            <h2>📄 Download Your Impact Certificate</h2>
+            <p>Get a tax-deductible certificate for your charitable contributions</p>
+            <button onclick="generateCertificate()" class="btn" style="font-size: 1.2rem; padding: 1rem 2rem;">
+                📥 Generate Certificate
+            </button>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        let impactData = null;
+        let timelineData = null;
+
+        // Load user info
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+        document.getElementById('userName').textContent = user.name;
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+
+        // Load impact data
+        async function loadImpactData() {
+            try {
+                const response = await apiGet(`/impact/user/${user._id}`);
+                if (response.success) {
+                    impactData = response.data;
+                    displayImpactData(impactData);
+                }
+
+                const timelineResponse = await apiGet('/impact/timeline?period=30days');
+                if (timelineResponse.success) {
+                    timelineData = timelineResponse.data;
+                    createTimelineChart();
+                }
+
+                const donationsResponse = await apiGet('/donations/my');
+                if (donationsResponse.success) {
+                    createDonationsChart(donationsResponse.data);
+                }
+            } catch (error) {
+                console.error('Error loading impact data:', error);
+            }
+        }
+
+        function displayImpactData(data) {
+            document.getElementById('totalMeals').textContent = data.totalMeals.toLocaleString();
+            document.getElementById('totalBeneficiaries').textContent = data.totalBeneficiaries.toLocaleString();
+            document.getElementById('totalCO2').textContent = Math.round(data.totalCO2Saved) + 'kg';
+            document.getElementById('totalWater').textContent = Math.round(data.totalWaterSaved / 1000).toLocaleString() + 'L';
+
+            // Calculate equivalents
+            const co2 = data.totalCO2Saved;
+            document.getElementById('treesPlanted').textContent = Math.round(co2 / 21); // 1 tree absorbs 21kg CO2/year
+            document.getElementById('carMiles').textContent = Math.round(co2 / 0.4).toLocaleString(); // 0.4kg CO2 per mile
+            document.getElementById('energySaved').textContent = Math.round(co2 / 0.5).toLocaleString(); // 0.5kg CO2 per kWh
+
+            // Display badges
+            displayBadges(data);
+        }
+
+        function displayBadges(data) {
+            const badgesContainer = document.getElementById('environmentalBadges');
+            const badges = [];
+
+            if (data.totalMeals >= 100) badges.push('🥇 Meal Champion');
+            if (data.totalMeals >= 500) badges.push('🏆 Platinum Donor');
+            if (data.totalCO2Saved >= 100) badges.push('🌍 Earth Protector');
+            if (data.totalCO2Saved >= 500) badges.push('🌱 Eco Warrior');
+            if (data.donationsCount >= 10) badges.push('⭐ Regular Donor');
+            if (data.donationsCount >= 50) badges.push('💎 Diamond Donor');
+
+            badgesContainer.innerHTML = badges.map(badge => 
+                `<div class="environmental-badge">${badge}</div>`
+            ).join('');
+        }
+
+        function createTimelineChart() {
+            const ctx = document.getElementById('impactChart').getContext('2d');
+            
+            const labels = timelineData.map(d => `${d._id.month}/${d._id.day}`);
+            const meals = timelineData.map(d => d.meals);
+            const co2 = timelineData.map(d => Math.round(d.co2));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Meals Served',
+                        data: meals,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'CO2 Saved (kg)',
+                        data: co2,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDonationsChart(donations) {
+            const ctx = document.getElementById('donationsChart').getContext('2d');
+            
+            const statusCounts = donations.reduce((acc, d) => {
+                acc[d.status] = (acc[d.status] || 0) + 1;
+                return acc;
+            }, {});
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts).map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: [
+                            '#f39c12',
+                            '#3498db',
+                            '#2ecc71',
+                            '#e74c3c',
+                            '#95a5a6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        async function generateCertificate() {
+            try {
+                const year = new Date().getFullYear();
+                const response = await apiPost('/tax/generate', { year });
+                
+                if (response.success) {
+                    alert('Certificate generated successfully!');
+                    window.open(window.SHAREPLATE_API_ORIGIN + `/api/tax/download/${response.data._id}`, '_blank');
+                }
+            } catch (error) {
+                console.error('Error generating certificate:', error);
+                alert('Failed to generate certificate');
+            }
+        }
+
+        // Load data on page load
+        loadImpactData();
+    </script>
+</body>
+</html>

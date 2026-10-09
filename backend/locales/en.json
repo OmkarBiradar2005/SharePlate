@@ -1,0 +1,62 @@
+{
+  "welcome": "Welcome to SharePlate",
+  "tagline": "Fighting Food Waste Together",
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "phone": "Phone Number",
+    "address": "Address"
+  },
+  "donation": {
+    "create": "Create Donation",
+    "myDonations": "My Donations",
+    "foodName": "Food Name",
+    "quantity": "Quantity",
+    "foodType": "Food Type",
+    "veg": "Vegetarian",
+    "nonveg": "Non-Vegetarian",
+    "cookedTime": "Cooked Time",
+    "expiryTime": "Expiry Time",
+    "pickupAddress": "Pickup Address",
+    "status": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
+    "urgency": {
+      "critical": "Critical - Expires very soon!",
+      "urgent": "Urgent - Pickup needed soon",
+      "moderate": "Moderate urgency",
+      "low": "Available for pickup",
+      "fresh": "Fresh - Plenty of time",
+      "expired": "Expired"
+    }
+  },
+  "impact": {
+    "title": "Your Impact",
+    "mealsServed": "Meals Served",
+    "co2Saved": "CO2 Saved",
+    "waterSaved": "Water Saved",
+    "beneficiaries": "People Helped"
+  },
+  "notifications": {
+    "newDonation": "New donation available",
+    "accepted": "Your donation was accepted",
+    "completed": "Donation completed",
+    "urgent": "Urgent donation needs pickup"
+  },
+  "dashboard": {
+    "analytics": "Analytics Dashboard",
+    "totalDonations": "Total Donations",
+    "completed": "Completed",
+    "pending": "Pending",
+    "badges": "Badges & Achievements",
+    "leaderboard": "Leaderboard"
+  }
+}

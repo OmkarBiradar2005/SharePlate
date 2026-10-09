@@ -1,0 +1,62 @@
+{
+  "welcome": "SharePlate में आपका स्वागत है",
+  "tagline": "खाद्य अपशिष्ट के खिलाफ मिलकर लड़ें",
+  "auth": {
+    "login": "लॉगिन",
+    "register": "रजिस्टर",
+    "logout": "लॉगआउट",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "name": "नाम",
+    "phone": "फोन नंबर",
+    "address": "पता"
+  },
+  "donation": {
+    "create": "दान बनाएं",
+    "myDonations": "मेरे दान",
+    "foodName": "खाद्य नाम",
+    "quantity": "मात्रा",
+    "foodType": "खाद्य प्रकार",
+    "veg": "शाकाहारी",
+    "nonveg": "मांसाहारी",
+    "cookedTime": "पका हुआ समय",
+    "expiryTime": "समाप्ति समय",
+    "pickupAddress": "पिकअप पता",
+    "status": {
+      "pending": "लंबित",
+      "accepted": "स्वीकृत",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द",
+      "expired": "समाप्त"
+    },
+    "urgency": {
+      "critical": "गंभीर - जल्द ही समाप्त हो जाएगा!",
+      "urgent": "जरूरी - जल्द ही पिकअप की आवश्यकता",
+      "moderate": "मध्यम तात्कालिकता",
+      "low": "पिकअप के लिए उपलब्ध",
+      "fresh": "ताजा - पर्याप्त समय",
+      "expired": "समाप्त"
+    }
+  },
+  "impact": {
+    "title": "आपका प्रभाव",
+    "mealsServed": "परोसे गए भोजन",
+    "co2Saved": "CO2 बचाया",
+    "waterSaved": "पानी बचाया",
+    "beneficiaries": "मदद किए गए लोग"
+  },
+  "notifications": {
+    "newDonation": "नया दान उपलब्ध",
+    "accepted": "आपका दान स्वीकार कर लिया गया",
+    "completed": "दान पूर्ण",
+    "urgent": "जरूरी दान पिकअप की आवश्यकता है"
+  },
+  "dashboard": {
+    "analytics": "विश्लेषण डैशबोर्ड",
+    "totalDonations": "कुल दान",
+    "completed": "पूर्ण",
+    "pending": "लंबित",
+    "badges": "बैज और उपलब्धियाँ",
+    "leaderboard": "लीडरबोर्ड"
+  }
+}

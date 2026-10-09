@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Donation - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    🍽️ SharePlate
+                </div>
+                <ul class="nav-links">
+                    <li><a href="donor-dashboard.html">Dashboard</a></li>
+                    <li><span id="userName">Loading...</span></li>
+                    <li><button id="logoutBtn" class="btn-logout">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="form-container" style="max-width: 600px;">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #2c3e50;">Create Food Donation</h2>
+            
+            <!-- Message container -->
+            <div id="message" class="message"></div>
+
+            <form id="donationForm">
+                <div class="form-group">
+                    <label for="foodName">Food Name *</label>
+                    <input type="text" id="foodName" name="foodName" class="form-control" 
+                           placeholder="e.g., Biryani, Sandwiches, Pizza" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity">Quantity *</label>
+                    <input type="text" id="quantity" name="quantity" class="form-control" 
+                           placeholder="e.g., 50 plates, 100 servings, 25 boxes" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Food Type *</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="foodType" value="veg" required>
+                            🥗 Vegetarian
+                        </label>
+                        <label>
+                            <input type="radio" name="foodType" value="nonveg" required>
+                            🍖 Non-Vegetarian
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="cookedTime">Cooked Date & Time *</label>
+                        <input type="datetime-local" id="cookedTime" name="cookedTime" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expiryTime">Best Before Date & Time *</label>
+                        <input type="datetime-local" id="expiryTime" name="expiryTime" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pickupAddress">Pickup Address *</label>
+                    <textarea id="pickupAddress" name="pickupAddress" class="form-control" rows="3" 
+                              placeholder="Complete address where NGO can pickup the food" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="contactNumber">Contact Number *</label>
+                    <input type="tel" id="contactNumber" name="contactNumber" class="form-control" 
+                           placeholder="10-15 digits" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="imageUrl">Food Image URL (Optional)</label>
+                    <input type="url" id="imageUrl" name="imageUrl" class="form-control" 
+                           placeholder="https://example.com/food-image.jpg">
+                    <small style="color: #666;">Add an image URL to help NGOs identify the food</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Location (Optional)</label>
+                    <div class="grid grid-2">
+                        <input type="number" id="latitude" name="latitude" class="form-control" 
+                               placeholder="Latitude" step="any">
+                        <input type="number" id="longitude" name="longitude" class="form-control" 
+                               placeholder="Longitude" step="any">
+                    </div>
+                    <small style="color: #666;">GPS coordinates for precise location (optional)</small>
+                </div>
+
+                <div style="margin: 2rem 0; padding: 1rem; background: #e8f5e8; border-radius: 5px; border-left: 4px solid #27ae60;">
+                    <h4 style="color: #27ae60; margin-bottom: 0.5rem;">📋 Before Creating Donation:</h4>
+                    <ul style="margin: 0; color: #2d5016;">
+                        <li>✅ Ensure food is fresh and safe to consume</li>
+                        <li>✅ Food should be properly stored and packaged</li>
+                        <li>✅ Be available at the pickup address during pickup time</li>
+                        <li>✅ Have contact person available for coordination</li>
+                    </ul>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" onclick="window.location.href='donor-dashboard.html'" class="btn btn-outline">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success" style="flex: 1;">
+                        <span id="submitText">Create Donation</span>
+                        <span id="submitLoading" class="loading hidden"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/donor.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const user = getCurrentUser();
+            if (!user || user.role !== 'restaurant') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Set user name
+            document.getElementById('userName').textContent = user.name;
+
+            // Pre-fill contact number and address
+            document.getElementById('contactNumber').value = user.phone;
+            document.getElementById('pickupAddress').value = user.address;
+
+            // Set default cooked time to now
+            const now = new Date();
+            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('cookedTime').value = localDateTime;
+
+            // Set default expiry time to 24 hours from now
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const tomorrowDateTime = new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('expiryTime').value = tomorrowDateTime;
+
+            // Setup event listeners
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                logout();
+                window.location.href = 'index.html';
+            });
+
+            // Form submission
+            document.getElementById('donationForm').addEventListener('submit', handleCreateDonation);
+
+            // Validate expiry time is after cooked time
+            document.getElementById('expiryTime').addEventListener('change', validateTimes);
+            document.getElementById('cookedTime').addEventListener('change', validateTimes);
+        }
+
+        function validateTimes() {
+            const cookedTime = new Date(document.getElementById('cookedTime').value);
+            const expiryTime = new Date(document.getElementById('expiryTime').value);
+            const now = new Date();
+
+            const cookedInput = document.getElementById('cookedTime');
+            const expiryInput = document.getElementById('expiryTime');
+
+            // Remove previous error classes
+            cookedInput.classList.remove('error');
+            expiryInput.classList.remove('error');
+
+            if (cookedTime > now) {
+                cookedInput.classList.add('error');
+                showMessage('Cooked time cannot be in the future', 'error');
+                return false;
+            }
+
+            if (expiryTime <= now) {
+                expiryInput.classList.add('error');
+                showMessage('Expiry time must be in the future', 'error');
+                return false;
+            }
+
+            if (expiryTime <= cookedTime) {
+                expiryInput.classList.add('error');
+                showMessage('Expiry time must be after cooked time', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        async function handleCreateDonation(e) {
+            e.preventDefault();
+            
+            if (!validateTimes()) {
+                return;
+            }
+
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = {
+                foodName: formData.get('foodName').trim(),
+                quantity: formData.get('quantity').trim(),
+                foodType: formData.get('foodType'),
+                cookedTime: formData.get('cookedTime'),
+                expiryTime: formData.get('expiryTime'),
+                pickupAddress: formData.get('pickupAddress').trim(),
+                contactNumber: formData.get('contactNumber').trim(),
+                imageUrl: formData.get('imageUrl').trim() || null
+            };
+
+            // Add location if provided
+            const latitude = formData.get('latitude');
+            const longitude = formData.get('longitude');
+            if (latitude && longitude) {
+                data.location = {
+                    lat: parseFloat(latitude),
+                    lng: parseFloat(longitude)
+                };
+            }
+
+            // Validate phone number
+            if (!/^\d{10,15}$/.test(data.contactNumber)) {
+                showMessage('Please enter a valid contact number (10-15 digits)', 'error');
+                return;
+            }
+
+            // Show loading state
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            
+            try {
+                const result = await createDonation(data);
+                
+                if (result.success) {
+                    showMessage('Donation created successfully! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'donor-dashboard.html';
+                    }, 2000);
+                } else {
+                    showMessage(result.message || 'Failed to create donation', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while creating donation', 'error');
+            } finally {
+                // Hide loading state
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message show message-${type}`;
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

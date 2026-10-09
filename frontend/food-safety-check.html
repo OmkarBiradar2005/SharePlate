@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Safety Checklist - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .checklist-section {
+            background: white;
+            padding: 2rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 1rem;
+        }
+        .checkbox-item label {
+            flex: 1;
+            cursor: pointer;
+        }
+        .photo-upload-box {
+            border: 2px dashed #ccc;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .photo-upload-box:hover {
+            border-color: #3498db;
+        }
+        .temperature-input {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .rating-stars {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+        }
+        .rating-stars .star.filled {
+            color: #f39c12;
+        }
+        .compliance-score {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+        .score-number {
+            font-size: 4rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">🍽️ SharePlate</div>
+                <ul class="nav-links">
+                    <li><a href="enhanced-donor-dashboard.html">Dashboard</a></li>
+                    <li><a href="food-safety-check.html" class="active">Safety Check</a></li>
+                    <li><button id="logoutBtn" class="btn-logout">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 900px;">
+        <h1>🛡️ Food Safety Verification Checklist</h1>
+        <p>Ensure food quality and safety before donation pickup</p>
+
+        <form id="safetyCheckForm">
+            <input type="hidden" id="donationId">
+
+            <!-- Pre-Pickup Check -->
+            <div class="checklist-section">
+                <h2>📋 Pre-Pickup Safety Check</h2>
+                <p>Complete this checklist before donation is picked up</p>
+
+                <div class="temperature-input" style="margin: 1.5rem 0;">
+                    <label><strong>Temperature Check:</strong></label>
+                    <input type="number" id="temperature" class="form-control" placeholder="Temperature" style="width: 150px;">
+                    <select id="tempUnit" class="form-control" style="width: 100px;">
+                        <option value="C">°C</option>
+                        <option value="F">°F</option>
+                    </select>
+                    <label>
+                        <input type="checkbox" id="tempAcceptable"> Acceptable range
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Packaging Type:</strong></label>
+                    <select id="packaging" class="form-control" required>
+                        <option value="">Select packaging type</option>
+                        <option value="sealed">Sealed</option>
+                        <option value="covered">Covered</option>
+                        <option value="open">Open</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-item">
+                    <input type="checkbox" id="contamination" name="check">
+                    <label for="contamination">
+                        <strong>Contamination Check:</strong> Food is free from visible contamination
+                    </label>
+                </div>
+
+                <div class="checkbox-item">
+                    <input type="checkbox" id="smell" name="check">
+                    <label for="smell">
+                        <strong>Freshness Check:</strong> Food smells fresh (no foul odor)
+                    </label>
+                </div>
+
+                <div class="checkbox-item">
+                    <input type="checkbox" id="appearance" name="check">
+                    <label for="appearance">
+                        <strong>Visual Inspection:</strong> Food appears fresh and appetizing
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label><strong>Upload Photos:</strong></label>
+                    <div class="photo-upload-box" onclick="document.getElementById('photoInput').click()">
+                        📸 Click to upload food photos
+                        <input type="file" id="photoInput" multiple accept="image/*" style="display: none;">
+                    </div>
+                    <div id="photoPreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Additional Notes:</strong></label>
+                    <textarea id="notes" class="form-control" rows="4" placeholder="Any additional observations or notes..."></textarea>
+                </div>
+            </div>
+
+            <!-- Compliance Score Display -->
+            <div class="compliance-score">
+                <h2>Compliance Score</h2>
+                <div class="score-number" id="complianceScore">0%</div>
+                <p id="complianceMessage">Complete all checks to calculate score</p>
+            </div>
+
+            <div style="text-align: center; margin: 2rem 0;">
+                <button type="submit" class="btn" style="padding: 1rem 3rem; font-size: 1.2rem;">
+                    ✅ Submit Safety Checklist
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Get donation ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const donationId = urlParams.get('donationId');
+        document.getElementById('donationId').value = donationId;
+
+        // Photo upload preview
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = '';
+            
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '100%';
+                    img.style.borderRadius = '8px';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Calculate compliance score
+        function calculateScore() {
+            let score = 0;
+            let maxScore = 100;
+            
+            // Temperature check (20 points)
+            if (document.getElementById('temperature').value && document.getElementById('tempAcceptable').checked) {
+                score += 20;
+            }
+            
+            // Packaging (20 points)
+            const packaging = document.getElementById('packaging').value;
+            if (packaging === 'sealed') score += 20;
+            else if (packaging === 'covered') score += 15;
+            else if (packaging === 'open') score += 10;
+            
+            // Contamination (20 points)
+            if (document.getElementById('contamination').checked) score += 20;
+            
+            // Smell (20 points)
+            if (document.getElementById('smell').checked) score += 20;
+            
+            // Appearance (20 points)
+            if (document.getElementById('appearance').checked) score += 20;
+            
+            const percentage = Math.round((score / maxScore) * 100);
+            document.getElementById('complianceScore').textContent = percentage + '%';
+            
+            if (percentage >= 80) {
+                document.getElementById('complianceMessage').textContent = '✅ Excellent - Food meets safety standards';
+            } else if (percentage >= 60) {
+                document.getElementById('complianceMessage').textContent = '⚠️ Acceptable - Minor issues noted';
+            } else {
+                document.getElementById('complianceMessage').textContent = '❌ Below standard - Review required';
+            }
+        }
+
+        // Update score on any change
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('change', calculateScore);
+        });
+
+        // Form submission
+        document.getElementById('safetyCheckForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                donationId: document.getElementById('donationId').value,
+                prePickupCheck: {
+                    temperature: {
+                        value: parseFloat(document.getElementById('temperature').value),
+                        unit: document.getElementById('tempUnit').value,
+                        acceptable: document.getElementById('tempAcceptable').checked
+                    },
+                    packaging: document.getElementById('packaging').value,
+                    contamination: {
+                        checked: true,
+                        status: document.getElementById('contamination').checked ? 'clean' : 'contaminated'
+                    },
+                    smell: {
+                        checked: true,
+                        status: document.getElementById('smell').checked ? 'fresh' : 'spoiled'
+                    },
+                    appearance: {
+                        checked: true,
+                        status: document.getElementById('appearance').checked ? 'good' : 'poor'
+                    },
+                    notes: document.getElementById('notes').value
+                }
+            };
+
+            try {
+                const response = await apiPost('/food-safety/create', data);
+                if (response.success) {
+                    alert('✅ Safety checklist submitted successfully!\nCompliance Score: ' + response.data.complianceScore + '%');
+                    window.location.href = 'enhanced-donor-dashboard.html';
+                }
+            } catch (error) {
+                alert('❌ Error submitting checklist: ' + error.message);
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

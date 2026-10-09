@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Dashboard - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    🍽️ SharePlate
+                </div>
+                <ul class="nav-links">
+                    <li><span id="userName">Loading...</span></li>
+                    <li><button id="logoutBtn" class="btn-logout">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="dashboard-header">
+            <h1>🤝 NGO Dashboard</h1>
+            <p>Find and accept food donations to help your community</p>
+        </div>
+
+        <!-- Message container -->
+        <div id="message" class="message"></div>
+
+        <!-- Stats Section -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalAvailable">-</div>
+                <div class="stat-label">Available Donations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="myAccepted">-</div>
+                <div class="stat-label">My Accepted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="myCompleted">-</div>
+                <div class="stat-label">My Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalDonations">-</div>
+                <div class="stat-label">All Donations</div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card" style="margin: 2rem 0;">
+            <div class="card-header">
+                <h3>Filter Donations</h3>
+            </div>
+            <div class="card-body">
+                <div class="flex gap-2" style="flex-wrap: wrap; align-items: center;">
+                    <select id="statusFilter" class="form-control" style="max-width: 200px;">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <select id="foodTypeFilter" class="form-control" style="max-width: 200px;">
+                        <option value="">All Food Types</option>
+                        <option value="veg">Vegetarian</option>
+                        <option value="nonveg">Non-Vegetarian</option>
+                    </select>
+                    <button id="refreshBtn" class="btn btn-primary">🔄 Refresh</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="margin-bottom: 2rem;">
+            <div class="flex gap-1">
+                <button id="allTab" class="btn btn-primary">All Donations</button>
+                <button id="myTab" class="btn btn-outline">My Accepted</button>
+            </div>
+        </div>
+
+        <!-- Donations List -->
+        <div class="card">
+            <div class="card-header">
+                <h3 id="listTitle">All Available Donations</h3>
+            </div>
+            <div class="card-body">
+                <div id="loadingSpinner" class="text-center" style="padding: 2rem;">
+                    <div class="loading" style="margin: 0 auto;"></div>
+                    <p style="margin-top: 1rem;">Loading donations...</p>
+                </div>
+                <div id="donationsContainer" class="hidden">
+                    <!-- Donations will be loaded here -->
+                </div>
+                <div id="emptyState" class="text-center hidden" style="padding: 3rem;">
+                    <p style="color: #666; font-size: 1.1rem;">📋 No donations found</p>
+                    <p style="color: #999;">Check back later for new food donations!</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ngo.js"></script>
+    <script>
+        // Global state
+        let allDonations = [];
+        let currentUser = null;
+        let currentView = 'all'; // 'all' or 'my'
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            const user = getCurrentUser();
+            if (!user || user.role !== 'ngo') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = user;
+
+            // Set user name
+            document.getElementById('userName').textContent = user.name;
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Load donations
+            await loadDonations();
+        });
+
+        function setupEventListeners() {
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                logout();
+                window.location.href = 'index.html';
+            });
+
+            // Tabs
+            document.getElementById('allTab').addEventListener('click', function() {
+                switchTab('all');
+            });
+
+            document.getElementById('myTab').addEventListener('click', function() {
+                switchTab('my');
+            });
+
+            // Filter change
+            document.getElementById('statusFilter').addEventListener('change', filterDonations);
+            document.getElementById('foodTypeFilter').addEventListener('change', filterDonations);
+
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', loadDonations);
+        }
+
+        function switchTab(view) {
+            currentView = view;
+            
+            // Update tab appearance
+            const allTab = document.getElementById('allTab');
+            const myTab = document.getElementById('myTab');
+            const listTitle = document.getElementById('listTitle');
+
+            if (view === 'all') {
+                allTab.className = 'btn btn-primary';
+                myTab.className = 'btn btn-outline';
+                listTitle.textContent = 'All Available Donations';
+                
+                // Reset status filter to show all for all donations view
+                document.getElementById('statusFilter').value = '';
+            } else {
+                allTab.className = 'btn btn-outline';
+                myTab.className = 'btn btn-primary';
+                listTitle.textContent = 'My Accepted Donations';
+                
+                // Set status filter to accepted for my donations view
+                document.getElementById('statusFilter').value = 'accepted';
+            }
+
+            filterDonations();
+        }
+
+        async function loadDonations() {
+            const spinner = document.getElementById('loadingSpinner');
+            const container = document.getElementById('donationsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            try {
+                spinner.classList.remove('hidden');
+                container.classList.add('hidden');
+                emptyState.classList.add('hidden');
+
+                const result = await getAllDonations();
+                
+                if (result.success) {
+                    allDonations = result.data;
+                    updateStats(allDonations);
+                    filterDonations();
+                } else {
+                    showMessage(result.message || 'Failed to load donations', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while loading donations', 'error');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function updateStats(donations) {
+            const stats = donations.reduce((acc, donation) => {
+                acc.total++;
+                
+                if (donation.status === 'pending') {
+                    acc.available++;
+                }
+                
+                if (donation.acceptedBy && donation.acceptedBy._id === currentUser._id) {
+                    if (donation.status === 'accepted') {
+                        acc.myAccepted++;
+                    } else if (donation.status === 'completed') {
+                        acc.myCompleted++;
+                    }
+                }
+                
+                return acc;
+            }, { total: 0, available: 0, myAccepted: 0, myCompleted: 0 });
+
+            document.getElementById('totalDonations').textContent = stats.total;
+            document.getElementById('totalAvailable').textContent = stats.available;
+            document.getElementById('myAccepted').textContent = stats.myAccepted;
+            document.getElementById('myCompleted').textContent = stats.myCompleted;
+        }
+
+        function filterDonations() {
+            const status = document.getElementById('statusFilter').value;
+            const foodType = document.getElementById('foodTypeFilter').value;
+            
+            let filteredDonations = allDonations;
+
+            // Filter by view (all or my)
+            if (currentView === 'my') {
+                filteredDonations = filteredDonations.filter(donation => 
+                    donation.acceptedBy && donation.acceptedBy._id === currentUser._id
+                );
+            }
+
+            // Filter by status
+            if (status) {
+                filteredDonations = filteredDonations.filter(donation => donation.status === status);
+            }
+
+            // Filter by food type
+            if (foodType) {
+                filteredDonations = filteredDonations.filter(donation => donation.foodType === foodType);
+            }
+
+            displayDonations(filteredDonations);
+        }
+
+        function displayDonations(donations) {
+            const container = document.getElementById('donationsContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (donations.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            const donationsHtml = donations.map(donation => {
+                const createdDate = new Date(donation.createdAt).toLocaleDateString();
+                const expiryDate = new Date(donation.expiryTime).toLocaleDateString();
+                const expiryTime = new Date(donation.expiryTime).toLocaleTimeString();
+                const isExpiring = new Date(donation.expiryTime) - new Date() < 24 * 60 * 60 * 1000; // Less than 24 hours
+                
+                return `
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <div class="card-body">
+                            <div class="flex-between" style="margin-bottom: 1rem;">
+                                <div>
+                                    <h4 style="margin-bottom: 0.5rem;">${donation.foodName}</h4>
+                                    <div class="food-type ${donation.foodType}">${donation.foodType.toUpperCase()}</div>
+                                    ${isExpiring && donation.status === 'pending' ? '<span style="color: #e74c3c; font-size: 0.8rem; font-weight: bold;">⚠️ EXPIRES SOON</span>' : ''}
+                                </div>
+                                <div class="status-badge status-${donation.status}">${donation.status.toUpperCase()}</div>
+                            </div>
+                            
+                            <div class="grid grid-2" style="gap: 1rem; margin-bottom: 1rem;">
+                                <div>
+                                    <strong>Quantity:</strong> ${donation.quantity}<br>
+                                    <strong>Restaurant:</strong> ${donation.donorId.name}<br>
+                                    <strong>Contact:</strong> ${donation.contactNumber}<br>
+                                    <strong>Created:</strong> ${createdDate}
+                                </div>
+                                <div>
+                                    <strong>Expires:</strong> ${expiryDate} at ${expiryTime}<br>
+                                    <strong>Address:</strong> ${donation.pickupAddress}<br>
+                                    ${donation.acceptedBy ? `<strong>Accepted by:</strong> ${donation.acceptedBy.name}` : '<em>Available for pickup</em>'}
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-2" style="flex-wrap: wrap;">
+                                <a href="donation-details.html?id=${donation._id}" class="btn btn-primary">View Details</a>
+                                ${donation.status === 'pending' ? `
+                                    <button onclick="acceptDonation('${donation._id}')" class="btn btn-success">Accept Donation</button>
+                                ` : ''}
+                                ${donation.status === 'accepted' && donation.acceptedBy && donation.acceptedBy._id === currentUser._id ? `
+                                    <button onclick="completeDonation('${donation._id}')" class="btn btn-warning">Mark Completed</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = donationsHtml;
+        }
+
+        async function acceptDonation(donationId) {
+            if (!confirm('Are you sure you want to accept this donation? You will be responsible for picking it up.')) {
+                return;
+            }
+
+            try {
+                const result = await acceptDonationRequest(donationId);
+                
+                if (result.success) {
+                    showMessage('Donation accepted successfully! Please coordinate with the restaurant for pickup.', 'success');
+                    await loadDonations(); // Refresh list
+                } else {
+                    showMessage(result.message || 'Failed to accept donation', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while accepting donation', 'error');
+            }
+        }
+
+        async function completeDonation(donationId) {
+            if (!confirm('Mark this donation as completed? This means you have successfully picked up and distributed the food.')) {
+                return;
+            }
+
+            try {
+                const result = await updateDonationStatus(donationId, 'completed');
+                
+                if (result.success) {
+                    showMessage('Donation marked as completed! Thank you for helping reduce food waste.', 'success');
+                    await loadDonations(); // Refresh list
+                } else {
+                    showMessage(result.message || 'Failed to complete donation', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred while completing donation', 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message show message-${type}`;
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

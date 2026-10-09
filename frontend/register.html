@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    <a href="index.html" style="color: white; text-decoration: none;">🍽️ SharePlate</a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="index.html">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="form-container">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #2c3e50;">Create Your Account</h2>
+            
+            <!-- Message container -->
+            <div id="message" class="message"></div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="10-15 digits" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address *</label>
+                    <textarea id="address" name="address" class="form-control" rows="3" placeholder="Full address including city and state" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Account Type *</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="role" value="restaurant" required>
+                            🏪 Restaurant (Food Donor)
+                        </label>
+                        <label>
+                            <input type="radio" name="role" value="ngo" required>
+                            🤝 NGO (Food Receiver)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" class="form-control" minlength="6" required>
+                    <small style="color: #666;">Minimum 6 characters</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    <span id="submitText">Create Account</span>
+                    <span id="submitLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <p>Already have an account? <a href="login.html" style="color: #3498db; text-decoration: none;">Login here</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Set role from URL parameter if present
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const role = urlParams.get('role');
+            
+            if (role === 'restaurant' || role === 'ngo') {
+                const radioButton = document.querySelector(`input[name="role"][value="${role}"]`);
+                if (radioButton) {
+                    radioButton.checked = true;
+                }
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('registerForm').addEventListener('submit', handleRegister);
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            const messageEl = document.getElementById('message');
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name').trim(),
+                email: formData.get('email').trim(),
+                phone: formData.get('phone').trim(),
+                address: formData.get('address').trim(),
+                role: formData.get('role'),
+                password: formData.get('password')
+            };
+
+            // Validate passwords match
+            const confirmPassword = formData.get('confirmPassword');
+            if (data.password !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+                return;
+            }
+
+            // Validate phone number
+            if (!/^\d{10,15}$/.test(data.phone)) {
+                showMessage('Please enter a valid phone number (10-15 digits)', 'error');
+                return;
+            }
+
+            // Show loading state
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            
+            try {
+                const result = await register(data);
+                
+                if (result.success) {
+                    // Store user data and redirect
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data));
+                    
+                    showMessage('Registration successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        if (result.data.role === 'restaurant') {
+                            window.location.href = 'donor-dashboard.html';
+                        } else {
+                            window.location.href = 'ngo-dashboard.html';
+                        }
+                    }, 1500);
+                } else {
+                    showMessage(result.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showMessage(error.message || 'An error occurred during registration', 'error');
+            } finally {
+                // Hide loading state
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = message;
+            messageEl.className = `message show message-${type}`;
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

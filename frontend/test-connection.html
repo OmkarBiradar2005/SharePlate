@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Connection - SharePlate</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container" style="padding: 3rem;">
+        <h1>🔧 Server Connection Test</h1>
+        
+        <div class="card" style="margin: 2rem 0;">
+            <div class="card-body">
+                <h3>Backend Status</h3>
+                <p id="connectionStatus">Testing connection...</p>
+                <button onclick="testConnection()" class="btn btn-primary">Retest Connection</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h3>API Response</h3>
+                <pre id="apiResponse" style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto;"></pre>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-body">
+                <h3>Quick Test Registration</h3>
+                <p>Create a test restaurant account:</p>
+                <button onclick="createTestUser()" class="btn btn-success">Create Test Restaurant</button>
+                <p id="testResult"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const API_URL = window.SHAREPLATE_API_ORIGIN || 'http://localhost:5000';
+
+        async function testConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+            const responseEl = document.getElementById('apiResponse');
+            
+            try {
+                statusEl.textContent = 'Connecting...';
+                statusEl.style.color = '#3498db';
+                
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                statusEl.textContent = '✅ Connected Successfully!';
+                statusEl.style.color = '#27ae60';
+                responseEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                statusEl.textContent = '❌ Connection Failed: ' + error.message;
+                statusEl.style.color = '#e74c3c';
+                responseEl.textContent = error.toString();
+            }
+        }
+
+        async function createTestUser() {
+            const resultEl = document.getElementById('testResult');
+            
+            try {
+                resultEl.textContent = 'Creating test user...';
+                resultEl.style.color = '#3498db';
+                
+                const response = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'Test Restaurant',
+                        email: 'test@restaurant.com',
+                        password: 'test123',
+                        phone: '1234567890',
+                        role: 'restaurant',
+                        address: '123 Test Street'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultEl.innerHTML = `✅ Test user created!<br>Email: test@restaurant.com<br>Password: test123<br><a href="login.html">Go to Login</a>`;
+                    resultEl.style.color = '#27ae60';
+                } else {
+                    resultEl.textContent = '⚠️ ' + (data.message || 'User might already exist');
+                    resultEl.style.color = '#f39c12';
+                }
+            } catch (error) {
+                resultEl.textContent = '❌ Error: ' + error.message;
+                resultEl.style.color = '#e74c3c';
+            }
+        }
+
+        // Test on page load
+        window.addEventListener('load', testConnection);
+    </script>
+</body>
+</html>
