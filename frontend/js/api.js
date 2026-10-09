@@ -1,5 +1,12 @@
-// API Base Configuration
-const API_BASE_URL = window.SHAREPLATE_API_BASE_URL || 'http://localhost:5000/api';
+
+/**
+ * SharePlate API Configuration
+ * Backend hosted on Render
+ */
+
+const API_BASE_URL =
+    window.SHAREPLATE_API_BASE_URL ||
+    'https://shareplate-g1wy.onrender.com/api';
 
 // Helper function to get authentication token
 function getAuthToken() {
@@ -9,10 +16,16 @@ function getAuthToken() {
 // Helper function to get authentication headers
 function getAuthHeaders() {
     const token = getAuthToken();
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+
+    const headers = {
+        'Content-Type': 'application/json'
     };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
 }
 
 // Generic API request function
@@ -26,28 +39,50 @@ async function apiRequest(url, options = {}) {
         ...options,
         headers: {
             ...defaultOptions.headers,
-            ...options.headers
+            ...(options.headers || {})
         }
     };
 
     try {
         const response = await fetch(`${API_BASE_URL}${url}`, config);
-        const data = await response.json();
+
+        // Handle empty responses safely
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json')
+            ? await response.json()
+            : await response.text();
 
         // Handle authentication errors
         if (response.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = 'login.html';
+
+            if (!window.location.pathname.endsWith('login.html')) {
+                window.location.href = 'login.html';
+            }
+
             throw new Error('Authentication failed. Please login again.');
+        }
+
+        if (!response.ok) {
+            const message =
+                data && typeof data === 'object'
+                    ? data.message || data.error
+                    : data;
+
+            throw new Error(
+                message || `Request failed with status ${response.status}`
+            );
         }
 
         return data;
     } catch (error) {
-        // Handle network errors
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            throw new Error('Unable to connect to server. Please check if the server is running.');
+        if (error instanceof TypeError) {
+            throw new Error(
+                'Unable to connect to SharePlate server. Please check your internet connection or try again later.'
+            );
         }
+
         throw error;
     }
 }
@@ -110,6 +145,7 @@ function isExpiringSoon(expiryTime) {
     const now = new Date();
     const expiry = new Date(expiryTime);
     const hoursUntilExpiry = (expiry - now) / (1000 * 60 * 60);
+
     return hoursUntilExpiry < 24 && hoursUntilExpiry > 0;
 }
 
@@ -128,6 +164,7 @@ function isValidPhone(phone) {
 // Utility function to show loading state
 function showLoading(elementId) {
     const element = document.getElementById(elementId);
+
     if (element) {
         element.innerHTML = '<div class="loading"></div>';
     }
@@ -136,6 +173,7 @@ function showLoading(elementId) {
 // Utility function to hide loading state
 function hideLoading(elementId) {
     const element = document.getElementById(elementId);
+
     if (element) {
         element.innerHTML = '';
     }
@@ -144,12 +182,8 @@ function hideLoading(elementId) {
 // Utility function to handle API errors
 function handleApiError(error, defaultMessage = 'An error occurred') {
     console.error('API Error:', error);
-    
-    if (error.message) {
-        return error.message;
-    }
-    
-    return defaultMessage;
+
+    return error.message || defaultMessage;
 }
 
 // Export functions for use in other files
